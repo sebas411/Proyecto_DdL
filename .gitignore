@@ -1,3 +1,5 @@
 .vscode
-draft.txt
+graph.dot
+graph.png
+lexer.o
 lexer
