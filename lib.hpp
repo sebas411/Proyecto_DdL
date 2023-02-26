@@ -67,7 +67,11 @@ class Symbol {
         Symbol(char c) {
             c_id = c;
             id = int(c);
-            ep = false;
+            if (id == -1) {
+                ep = true;
+            } else {
+                ep = false;
+            }
         }
         Symbol(bool b) {
             c_id = '\0';
@@ -82,6 +86,8 @@ class Symbol {
         string printable() {
             if (ep) {
                 return "\u03b5";
+            } else if (c_id == '"') {
+                return "\\\"";
             }
             return string(1, c_id);
         }
@@ -186,7 +192,7 @@ void createGraph(Automata automata) {
 	MyFile << ";" << endl << "    node [shape = circle];" << endl;
     MyFile << "    qi -> q" << automata.initial_state.getid() << endl;
     for (Transition t: automata.transitions) {
-        MyFile << "    q" << t.origin_state.getid() << " -> q" << t.destiny_state.getid() << "   [label=" << t.symbol.printable() << "];" << endl;
+        MyFile << "    q" << t.origin_state.getid() << " -> q" << t.destiny_state.getid() << "   [label=\"" << t.symbol.printable() << "\"];" << endl;
     }
     MyFile << "}" << endl;
     MyFile.close();
@@ -194,49 +200,116 @@ void createGraph(Automata automata) {
     execlp("dot", "dot", "graph.dot", "-Tpng", "-o", "graph.png", NULL);
 }
 
-bool isValidRegex(const std::string& regexStr) {
-    bool escaped = false;
-    bool inCharacterClass = false;
-    int numParentheses = 0;
+string subepsilon(const string str) {
+    string output = "";
+    bool skip = false;
+    for (int i = 0; i < str.length(); i++) {
+        if (skip) {
+            skip = false;
+            continue;
+        }
+        char c = str[i];
+        char next = str[i+1];
+        if ((c & 0xFF) == 0xCE && (next & 0xFF) == 0xB5) {
+            char subs = -1;
+            output += subs;
+            skip = true;
+        } else {
+            output += c;
+        }
+    }
+    return output;
+}
 
-    for (char c : regexStr) {
+void coutEpsilonSafe(string expression) {
+    for (char c : expression) {
+        if (c == -1) {
+            cout << "\u03b5";
+        } else {
+            cout << c;
+        }
+    }
+    cout << endl;
+}
+
+bool isExpValid(string expression) {
+    bool valid = true;
+    bool escaped = false;
+    char lastc = '\0';
+    int numParentheses = 0;
+    int firstParenthesis = 0;
+    int wrong = 0;
+    int errtype = 0;
+    
+
+    for (int i = 0; i < expression.length(); i++) {
+        if (!valid) break;
+        char c = expression[i];
         switch (c) {
             case '\\':
+                if (i + 1 >= expression.length()) {
+                    wrong = i;
+                    errtype = 3;
+                }
                 escaped = !escaped;
                 break;
-            case '[':
-                if (!escaped) {
-                    inCharacterClass = true;
-                }
-                escaped = false;
-                break;
-            case ']':
-                if (inCharacterClass) {
-                    inCharacterClass = false;
-                }
-                escaped = false;
-                break;
             case '(':
-                if (!inCharacterClass) {
+                if (!escaped) {
                     numParentheses++;
+                    if (numParentheses == 1) {
+                        wrong = i;
+                    }
                 }
                 escaped = false;
                 break;
             case ')':
-                if (!inCharacterClass) {
+                if (!escaped) {
                     numParentheses--;
                     if (numParentheses < 0) {
-                        return false; // unbalanced parentheses
+                        wrong = i;
+                        valid = false;
+                        errtype = 1;
                     }
                 }
                 escaped = false;
                 break;
             case '*':
+                if (!escaped) {
+                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                        wrong = i;
+                        valid = false;
+                        errtype = 2;
+                    }
+                }
+                escaped = false;
+                break;
             case '+':
+                if (!escaped) {
+                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                        wrong = i;
+                        valid = false;
+                        errtype = 2;
+                    }
+                }
+                escaped = false;
+                break;
             case '?':
+                if (!escaped) {
+                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                        wrong = i;
+                        valid = false;
+                        errtype = 2;
+                    }
+                }
+                escaped = false;
+                break;
             case '|':
-                if (!escaped && !inCharacterClass) {
-                    return false; // invalid use of regex metacharacter
+                if (!escaped) {
+                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                        wrong = i;
+                        valid = false;
+                        errtype = 2;
+                    }
                 }
                 escaped = false;
                 break;
@@ -244,9 +317,31 @@ bool isValidRegex(const std::string& regexStr) {
                 escaped = false;
                 break;
         }
+        lastc = c;
     }
-
-    return numParentheses == 0; // parentheses must be balanced
+    if (valid && numParentheses != 0) {
+        valid = false;
+        errtype = 1;
+    }
+    if (!valid) {
+        coutEpsilonSafe(expression);
+        for (int i = 0; i < wrong; i++) cout << " ";
+        cout << '^' << endl;
+        if (errtype == 1) {
+            if (numParentheses > 0) {
+                cout << "Missing closing parenthesis" << endl;
+            } else if (numParentheses < 0) {
+                cout << "Missing starting parenthesis" << endl;
+            } 
+        } else if (errtype == 2){
+            cout << "Operator not used correctly" << endl;
+        }
+        else {
+            cout << "Error in this character" << endl;
+        }
+        return false;
+    }
+    
+    return true;
 }
-
 #endif

@@ -3,9 +3,26 @@
 #include "shunting_yard.hpp"
 
 // main
-int main(){
-    string postfix = shuntingYard("(a)*");
-    cout << "Resultado: " << postfix << endl;
+int main(int argc, char *argv[]){
+    string expression;
+    
+    if (argc == 2) {
+        expression = argv[1];
+    } else if (argc < 2) {
+        cout << "Por favor ingrese una expresión regular." << endl;
+        cout << "Uso: ./lexer \"[expression]\"" << endl;
+        return -1;
+    } else {
+        cout << "Ha ingresado demasiados argumentos." << endl;
+        cout << "Uso: ./lexer \"[expression]\"" << endl;
+        return -1;
+    }
+    expression = subepsilon(expression);
+    bool valid = isExpValid(expression);
+    if (!valid) return -1;
+    string postfix = shuntingYard(expression);
+    cout << "Resultado postfix: ";
+    coutEpsilonSafe(postfix);
     TreeNode *expression_tree = postfixToTree(postfix);
     NFA automata = Thompson(expression_tree);
     createGraph(automata);

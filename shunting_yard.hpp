@@ -16,28 +16,43 @@ string shuntingYard(string infix) {
     string right_concat = "(";
     string left_concat = ")*?+";
 
-    concatted += infix[0];
-    for (int i = 1; i < infix.length(); i++) {
-        char prevc = infix[i-1];
+    //concatted += infix[0];
+
+    char prevc = '\0';
+    for (int i = 0; i < infix.length(); i++) {
         char c = infix[i];
         if (prevc != '\0' && 
            (in(left_concat, prevc) || !in(ops, prevc)) && // left
            (in(right_concat, c)    || !in(ops, c)))       // right
         { 
             concatted += '~';
-        } 
+        }
+        if (c == '~') {
+            concatted += '\\';
+        }
+        if (c == ')' && prevc == '(') {
+            concatted += (char)(-1);
+        }
         concatted += c;
+        prevc = c;
     }
 
     // cout << concatted << endl;
 
     stack<char> operators;
-    // operators: () > *+? > |
+    
+    bool escaped = false;
     for (int i=0; i < concatted.length(); i++) {
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
         char token = concatted[i];
-        //cout << postfix << endl;
-        //printf("Token actual: %c ", token);
-        if (token == '(') {
+        if (token == '\\') {
+            escaped = true;
+            postfix += '\\';
+            postfix += concatted[i+1];
+        } else if (token == '(') {
             operators.push(token);
         } else if (token == ')') {
             while (!operators.empty() && operators.top() != '(') {
@@ -68,19 +83,23 @@ string shuntingYard(string infix) {
 
 TreeNode* postfixToTree(string postfix) {
     stack<TreeNode*> tree_stack;
-    string ops = "*|+?~";
+    string ops = "*|+?~\\";
     string unary_ops = "+*?";
+    bool escaped = false;
 
     for (char c: postfix) {
-        if (!in(ops, c)) {
+        if (!in(ops, c) || escaped) {
             TreeNode *node = new TreeNode(c);
             tree_stack.push(node);
+            escaped = false;
         } else {
             if (in(unary_ops,c)) {
                 TreeNode *unique = tree_stack.top();
                 tree_stack.pop();
                 TreeNode *node = new TreeNode(c, unique);
                 tree_stack.push(node);
+            } else if (c == '\\') {
+                escaped = true;
             } else {
                 TreeNode *right = tree_stack.top();
                 tree_stack.pop();

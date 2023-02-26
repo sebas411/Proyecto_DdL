@@ -3,6 +3,7 @@
 ## Laboratorio A
 
 ### Dependencias
+* GCC (para compilar)
 * Graphviz (comando `dot`)
 
 ### Compilación y ejecución
@@ -12,7 +13,7 @@ make
 ```
 Para ejecutarlo:  
 ```
-./lexer [regexp]
+./lexer "[regexp]"
 ```
 Para limpiar los archivos creados por la compilación y ejecución del programa:  
 ```
@@ -24,3 +25,4 @@ make clean
 
 #### Notas:
 * El programa fue probado y funciona en linux utilizando `g++ (GCC) 12.2.1 20230201`
+* Los autómatas generados del pre laboratorio A y B se encuentran bajo la carpeta `prelab`
