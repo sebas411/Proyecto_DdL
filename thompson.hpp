@@ -13,7 +13,9 @@ NFA Thompson(TreeNode *expression_tree, int start=0) {
             result.thompsonFinal = final;
             result.states.insert(initial);
             result.states.insert(final);
-            result.symbols.insert(s);
+            if (s != epsilon) {
+                result.symbols.insert(s);
+            }
             result.initial_state = initial;
             result.transitions.push_back(t);
             return result;

@@ -1,6 +1,7 @@
 #include "lib.hpp"
 #include "thompson.hpp"
 #include "shunting_yard.hpp"
+#include "subset_construction.hpp"
 
 // main
 int main(int argc, char *argv[]){
@@ -24,8 +25,9 @@ int main(int argc, char *argv[]){
     cout << "Resultado postfix: ";
     coutEpsilonSafe(postfix);
     TreeNode *expression_tree = postfixToTree(postfix);
-    NFA automata = Thompson(expression_tree);
-    createGraph(automata);
-
+    NFA Nautomaton = Thompson(expression_tree);
+    DFA Dautomaton = subsetConstruction(Nautomaton);
+    //createGraph(Nautomaton);
+    createGraph(Dautomaton);
     return 0;
 }

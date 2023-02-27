@@ -40,9 +40,13 @@ class State {
     private:
         int id;
     public:
-        set<State*> NFA_States;
+        set<State> NFA_States;
         State(int i) {
             id = i;
+        }
+        State (int i, set<State> states) {
+            id = i;
+            NFA_States = states;
         }
         State() {
             id = 0;
@@ -55,6 +59,9 @@ class State {
         }
         bool operator==(const State& s) const {
             return id == s.id;
+        }
+        bool operator!=(const State& s) const {
+            return id != s.id;
         }
 };
 
@@ -73,11 +80,6 @@ class Symbol {
                 ep = false;
             }
         }
-        Symbol(bool b) {
-            c_id = '\0';
-            id = 0;
-            ep = b;
-        }
         Symbol() {
             c_id = '\0';
             id = 0;
@@ -94,8 +96,14 @@ class Symbol {
         bool operator<(const Symbol& s) const {
             return id < s.id;  
         }
+        bool operator==(const Symbol& s) const {
+            return id == s.id;  
+        }
+        bool operator!=(const Symbol& s) const {
+            return id != s.id;  
+        }
 };
-Symbol epsilon = Symbol(true);
+Symbol epsilon((char)(-1));
 
 class Transition {
     public:
@@ -116,20 +124,20 @@ class Transition {
         }
 };
 
-class Automata {
+class Automaton {
     public:
         set<State> states;
         set<State> final_states;
         set<Symbol> symbols;
         State initial_state;
         list<Transition> transitions;
-        Automata(set<State> states_p, set<State> final_states_p) {
-            symbols.insert(epsilon);
+        Automaton(set<State> states_p, set<State> final_states_p) {
+            //symbols.insert(epsilon);
             states = states_p;
             final_states = final_states_p;
         }
-        Automata() {
-            symbols.insert(epsilon);
+        Automaton() {
+            //symbols.insert(epsilon);
         }
         int max_state() {
             int max = 0;
@@ -140,7 +148,7 @@ class Automata {
             }
             return max;
         }
-        void merge(Automata a) {
+        void merge(Automaton a) {
             for (State s : a.states) {
                 states.insert(s);
             }
@@ -151,9 +159,53 @@ class Automata {
 
 };
 
-class NFA : public Automata {
+class NFA : public Automaton {
     public:
         State thompsonFinal;
+
+        set<State> e_closure(set<State> T) {
+            stack<State> state_stack;
+            for (State s : T) {
+                state_stack.push(s);
+            }
+            set<State> rstates = T;
+
+            while (!state_stack.empty()) {
+                State t = state_stack.top();
+                state_stack.pop();
+                for (Transition tran : transitions) {
+                    if (tran.origin_state != t || tran.symbol != epsilon) continue;
+                    State u = tran.destiny_state;
+                    if (rstates.emplace(u).second) {
+                        state_stack.push(u);
+                    }
+                }
+            }
+
+            return rstates;
+        }
+
+        set<State> e_closure(State s) {
+            set<State> T;
+            T.insert(s);
+            return e_closure(T);
+        }
+
+        set<State> move(set<State> T, Symbol sym) {
+            set<State> rstates;
+            for (State s: T) {
+                for (Transition tran : transitions) {
+                    if (tran.origin_state != s || tran.symbol != sym) continue;
+                    rstates.insert(tran.destiny_state);
+                }
+            }
+
+            return rstates;
+        }
+
+};
+
+class DFA : public Automaton {
 
 };
 
@@ -180,24 +232,32 @@ void printTree(TreeNode *node) {
 }
 
 
-void createGraph(Automata automata) {
+void createGraph(Automaton automaton) {
     ofstream MyFile("graph.dot");
-    MyFile << "digraph automata {" << endl;
+    MyFile << "digraph automaton {" << endl;
     MyFile << "   rankdir=LR;" << endl;
     MyFile << "    node [shape = point ]; qi;" << endl;
     MyFile << "    node [shape = doublecircle];";
-    for (State finalstate:automata.final_states) {
+    for (State finalstate:automaton.final_states) {
         MyFile << " q" << finalstate.getid();
     }
 	MyFile << ";" << endl << "    node [shape = circle];" << endl;
-    MyFile << "    qi -> q" << automata.initial_state.getid() << endl;
-    for (Transition t: automata.transitions) {
+    MyFile << "    qi -> q" << automaton.initial_state.getid() << endl;
+    for (Transition t: automaton.transitions) {
         MyFile << "    q" << t.origin_state.getid() << " -> q" << t.destiny_state.getid() << "   [label=\"" << t.symbol.printable() << "\"];" << endl;
     }
     MyFile << "}" << endl;
     MyFile.close();
 
-    execlp("dot", "dot", "graph.dot", "-Tpng", "-o", "graph.png", NULL);
+    pid_t child_pid = fork();
+    if (child_pid == -1)
+        perror("fork");
+    else if (child_pid == 0)
+    {
+        // Execute the dot command from child to avoid blocking the process
+        execlp("dot", "dot", "graph.dot", "-Tpng", "-o", "graph.png", NULL);
+    }
+
 }
 
 string subepsilon(const string str) {
