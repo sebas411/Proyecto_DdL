@@ -13,7 +13,7 @@ make
 ```
 Para ejecutarlo:  
 ```
-./lexer "[regexp]"
+./lexer "regexp" ["input"]
 ```
 Para limpiar los archivos creados por la compilación y ejecución del programa:  
 ```

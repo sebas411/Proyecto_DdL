@@ -156,6 +156,7 @@ class Automaton {
                 symbols.insert(s);
             }
         }
+        bool simulate(string input);
 
 };
 
@@ -203,10 +204,45 @@ class NFA : public Automaton {
             return rstates;
         }
 
+        bool simulate(string input) {
+            set<State> S = e_closure(initial_state);
+            for (char c: input) {
+                Symbol sym(c);
+                S = e_closure(move(S,sym));
+            }
+
+            for (State s: S) {
+                for (State f: final_states) {
+                    if (s == f) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 };
 
 class DFA : public Automaton {
-
+    public:
+        State move(State s, Symbol sym) {
+            for (Transition t: transitions) {
+                if (t.origin_state == s && t.symbol == sym) {
+                    return t.destiny_state;
+                }
+            }
+            return -1;
+        }
+        bool simulate(string input) {
+            State s = initial_state;
+            for (char c: input) {
+                Symbol sym(c);
+                s = move(s, sym);
+            }
+            if (final_states.find(s) != final_states.end()) {
+                return true;
+            }
+            return false;
+        }
 };
 
 // funciones
