@@ -15,24 +15,85 @@ using namespace std;
 class TreeNode {
     public:
         char value;
-        // parametros
         TreeNode *left;
         TreeNode *right;
+        int position;
+        set<int> firstPos;
+        set<int> lastPos;
+        bool nullable;
 
-        //constructores
         TreeNode(char x) {
             value = x;
             left = right = NULL;
+            position = -1;
+            nullable = false;
         }
         TreeNode(char x, TreeNode *lnode, TreeNode *rnode) {
             value = x;
             left = lnode;
             right = rnode;
+            position = -1;
+            nullable = false;
         }
         TreeNode(char x, TreeNode *unique) {
             value = x;
             left = unique;
             right = NULL;
+            position = -1;
+            nullable = false;
+        }
+
+        int setPositions(int counter = 0) {
+            if (left == NULL && right == NULL) {
+                if (value == -1) {
+                    nullable = true;
+                    return counter;
+                }
+                nullable = false;
+                position = counter + 1;
+                firstPos.insert(position);
+                lastPos.insert(position);
+                return position;
+            } else {
+                if (value == '*') {
+                    int rcounter = left->setPositions(counter);
+                    nullable = true;
+                    firstPos.merge(left->firstPos);
+                    lastPos.merge(left->lastPos);
+                    return rcounter;
+                } else if (value == '|') {
+                    int rcounter = left->setPositions(counter);
+                    rcounter = right->setPositions(rcounter);
+                    nullable = left->nullable || right->nullable;
+                    firstPos.merge(left->firstPos);
+                    firstPos.merge(right->firstPos);
+                    lastPos.merge(left->lastPos);
+                    lastPos.merge(right->lastPos);
+                    return rcounter;
+                } else if (value == '~') {
+                    int rcounter = left->setPositions(counter);
+                    rcounter = right->setPositions(rcounter);
+                    nullable = left->nullable && right->nullable;
+                    if (left->nullable) {
+                        firstPos.merge(left->firstPos);
+                        firstPos.merge(right->firstPos);
+                    } else {
+                        firstPos.merge(left->firstPos);
+                    }
+                    if (right->nullable) {
+                        lastPos.merge(left->lastPos);
+                        lastPos.merge(right->lastPos);
+                    } else {
+                        lastPos.merge(right->lastPos);
+                    }
+                    return rcounter;
+                }
+            }
+            return -1;
+        }
+
+        void setFirstLastNullable() {
+
         }
 };
 
@@ -257,13 +318,27 @@ bool in(string s, char c) {
 }
 
 
-void printTree(TreeNode *node) {
+void printTree(TreeNode *node, int indent = 0) {
     // prints items in depth first order
     if (node) {
-        printTree(node->left);
-
-        printTree(node->right);
-        cout << node->value << " ";
+        if (indent == 0) cout << string(50, '-') << endl;
+        // print right tree
+        printTree(node->right, indent + 1);
+        // begin print value
+        cout << string(indent * 4, ' ');
+        if (node->value == -1){
+            cout << "ε";
+        } else if (node->value == '~' && node->left != NULL) {
+            cout << "◯";
+        } else {
+            cout << node->value;
+        }
+        if (node->position != -1) cout << '(' << node->position << ')';
+        cout << endl;
+        // end print value
+        // print left tree
+        printTree(node->left, indent + 1);
+        if (indent == 0) cout << string(50, '-') << endl;
     }
 }
 

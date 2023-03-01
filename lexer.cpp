@@ -2,6 +2,7 @@
 #include "thompson.hpp"
 #include "shunting_yard.hpp"
 #include "subset_construction.hpp"
+#include "direct_construction.hpp"
 
 // main
 int main(int argc, char *argv[]){
@@ -35,7 +36,9 @@ int main(int argc, char *argv[]){
         cout << "Resultado input (NFA): " << Nautomaton.simulate(input) << endl;
         cout << "Resultado input (DFA): " << Dautomaton.simulate(input) << endl;
     }
+    directConstruction(expression_tree);
     //createGraph(Nautomaton);
     //createGraph(Dautomaton);
+    delete expression_tree;
     return 0;
 }
