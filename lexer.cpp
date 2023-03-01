@@ -36,9 +36,9 @@ int main(int argc, char *argv[]){
         cout << "Resultado input (NFA): " << Nautomaton.simulate(input) << endl;
         cout << "Resultado input (DFA): " << Dautomaton.simulate(input) << endl;
     }
-    directConstruction(expression_tree);
+    DFA Dautomaton2 = directConstruction(expression_tree);
     //createGraph(Nautomaton);
-    //createGraph(Dautomaton);
+    createGraph(Dautomaton2);
     delete expression_tree;
     return 0;
 }

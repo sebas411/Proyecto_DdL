@@ -11,6 +11,20 @@
 #include <unistd.h>
 
 using namespace std;
+
+template <typename T>
+set<T> Union(set<T> set1, set<T> set2) {
+    set<T> *returned = new set<T>;
+    set<T> newReturned = *returned;
+    for (T item: set1) {
+        newReturned.insert(item);
+    }
+    for(T item: set2) {
+        newReturned.insert(item);
+    }
+    return newReturned;
+}
+
 // Declaración de clases
 class TreeNode {
     public:
@@ -58,33 +72,29 @@ class TreeNode {
                 if (value == '*') {
                     int rcounter = left->setPositions(counter);
                     nullable = true;
-                    firstPos.merge(left->firstPos);
-                    lastPos.merge(left->lastPos);
+                    firstPos = left->firstPos;
+                    lastPos = left->lastPos;
                     return rcounter;
                 } else if (value == '|') {
                     int rcounter = left->setPositions(counter);
                     rcounter = right->setPositions(rcounter);
                     nullable = left->nullable || right->nullable;
-                    firstPos.merge(left->firstPos);
-                    firstPos.merge(right->firstPos);
-                    lastPos.merge(left->lastPos);
-                    lastPos.merge(right->lastPos);
+                    firstPos = Union(left->firstPos, right->firstPos);
+                    lastPos = Union(left->lastPos, right->lastPos);
                     return rcounter;
                 } else if (value == '~') {
                     int rcounter = left->setPositions(counter);
                     rcounter = right->setPositions(rcounter);
                     nullable = left->nullable && right->nullable;
                     if (left->nullable) {
-                        firstPos.merge(left->firstPos);
-                        firstPos.merge(right->firstPos);
+                        firstPos = Union(left->firstPos, right->firstPos);
                     } else {
-                        firstPos.merge(left->firstPos);
+                        firstPos = left->firstPos;
                     }
                     if (right->nullable) {
-                        lastPos.merge(left->lastPos);
-                        lastPos.merge(right->lastPos);
+                        lastPos = Union(left->lastPos, right->lastPos);
                     } else {
-                        lastPos.merge(right->lastPos);
+                        lastPos = right->lastPos;
                     }
                     return rcounter;
                 }
@@ -92,9 +102,6 @@ class TreeNode {
             return -1;
         }
 
-        void setFirstLastNullable() {
-
-        }
 };
 
 class State {
