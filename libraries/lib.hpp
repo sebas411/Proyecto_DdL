@@ -349,9 +349,35 @@ void printTree(TreeNode *node, int indent = 0) {
     }
 }
 
+enum graphType {
+    nfa_graph,
+    dfa_sc_graph,
+    dfa_dc_graph,
+    dfa_min_sc_graph,
+    dfa_min_dc_graph,
+    def_graph
+};
 
-void createGraph(Automaton automaton) {
-    ofstream MyFile("graph.dot");
+void createGraph(Automaton automaton, graphType graph_type=def_graph) {
+    string filename;
+    switch (graph_type) {
+    case nfa_graph:
+        filename = "nfa.dot";
+        break;
+    case dfa_dc_graph:
+        filename = "dfa_dc.dot";
+        break;
+    case dfa_sc_graph:
+        filename = "dfa_sc.dot";
+        break;
+    case dfa_min_dc_graph:
+        filename = "dfa_min_dc.dot";
+        break;
+    case dfa_min_sc_graph:
+        filename = "dfa_min_sc.dot";
+        break;
+    }
+    ofstream MyFile(filename);
     MyFile << "digraph automaton {" << endl;
     MyFile << "   rankdir=LR;" << endl;
     MyFile << "    node [shape = point ]; qi;" << endl;
@@ -368,12 +394,23 @@ void createGraph(Automaton automaton) {
     MyFile.close();
 
     pid_t child_pid = fork();
-    if (child_pid == -1)
+    if (child_pid == -1) {
         perror("fork");
-    else if (child_pid == 0)
-    {
+    } else if (child_pid == 0) {
         // Execute the dot command from child to avoid blocking the process
-        execlp("dot", "dot", "graph.dot", "-Tpng", "-o", "graph.png", NULL);
+        if (graph_type == nfa_graph) {
+            execlp("dot", "dot", "nfa.dot", "-Tpng", "-o", "nfa.png", NULL);
+        } else if (graph_type == dfa_sc_graph) {
+            execlp("dot", "dot", "dfa_sc.dot", "-Tpng", "-o", "dfa_sc.png", NULL);
+        } else if (graph_type == dfa_dc_graph) {
+            execlp("dot", "dot", "dfa_dc.dot", "-Tpng", "-o", "dfa_dc.png", NULL);
+        } else if (graph_type == dfa_min_sc_graph) {
+            execlp("dot", "dot", "dfa_min_sc.dot", "-Tpng", "-o", "dfa_min_sc.png", NULL);
+        } else if (graph_type == dfa_min_dc_graph) {
+            execlp("dot", "dot", "dfa_min_dc.dot", "-Tpng", "-o", "dfa_min_dc.png", NULL);
+        } else {
+            execlp("dot", "dot", "graph.dot", "-Tpng", "-o", "graph.png", NULL);
+        }
     }
 
 }

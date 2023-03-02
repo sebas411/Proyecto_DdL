@@ -1,8 +1,8 @@
-#include "lib.hpp"
-#include "thompson.hpp"
-#include "shunting_yard.hpp"
-#include "subset_construction.hpp"
-#include "direct_construction.hpp"
+#include "libraries/lib.hpp"
+#include "libraries/thompson.hpp"
+#include "libraries/shunting_yard.hpp"
+#include "libraries/subset_construction.hpp"
+#include "libraries/direct_construction.hpp"
 
 // main
 int main(int argc, char *argv[]){
@@ -37,8 +37,9 @@ int main(int argc, char *argv[]){
         cout << "Resultado input (DFA): " << Dautomaton.simulate(input) << endl;
     }
     DFA Dautomaton2 = directConstruction(expression_tree);
-    //createGraph(Nautomaton);
-    createGraph(Dautomaton2);
+    createGraph(Nautomaton, nfa_graph);
+    createGraph(Dautomaton, dfa_sc_graph);
+    createGraph(Dautomaton2, dfa_dc_graph);
     delete expression_tree;
     return 0;
 }

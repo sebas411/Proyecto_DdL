@@ -1,5 +1,7 @@
 .vscode
+*fa*.dot
 graph.dot
+*fa*.png
 graph.png
 lexer.o
 lexer
