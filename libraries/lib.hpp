@@ -6,26 +6,51 @@
 #include <fstream>
 #include <stack>
 #include <set>
-#include <list>
+#include <vector>
 #include <unordered_map>
 #include <unistd.h>
 
 using namespace std;
 
+// set methods
 template <typename T>
 set<T> Union(set<T> set1, set<T> set2) {
-    set<T> *returned = new set<T>;
-    set<T> newReturned = *returned;
+    set<T> *resultptr = new set<T>;
+    set<T> result = *resultptr;
     for (T item: set1) {
-        newReturned.insert(item);
+        result.insert(item);
     }
     for(T item: set2) {
-        newReturned.insert(item);
+        result.insert(item);
     }
-    return newReturned;
+    return result;
 }
 
-// Declaración de clases
+template <typename T>
+set<T> Substraction(set<T> set1, set<T> set2) {
+    set<T> *resultptr = new set<T>;
+    set<T> result = *resultptr;
+    for (T item: set1) {
+        if (set2.find(item) == set2.end()) {
+            result.insert(item);
+        }
+    }
+    return result;
+}
+
+template <typename T>
+set<T> Intersection(set<T> set1, set<T> set2) {
+    set<T> *resultptr = new set<T>;
+    set<T> result = *resultptr;
+    for (T item: set1) {
+        if (set2.find(item) != set2.end()) {
+            result.insert(item);
+        }
+    }
+    return result;
+}
+
+// classes declaration
 class TreeNode {
     public:
         char value;
@@ -198,7 +223,7 @@ class Automaton {
         set<State> final_states;
         set<Symbol> symbols;
         State initial_state;
-        list<Transition> transitions;
+        vector<Transition> transitions;
         Automaton(set<State> states_p, set<State> final_states_p) {
             //symbols.insert(epsilon);
             states = states_p;
@@ -313,7 +338,54 @@ class DFA : public Automaton {
         }
 };
 
-// funciones
+class GroupTransition {
+    public:
+        Symbol symbol;
+        int destGroup;
+        GroupTransition(Symbol sym, int dest) {
+            symbol = sym;
+            destGroup = dest;
+        }
+        bool operator<(const GroupTransition& gt) const {
+            if (symbol != gt.symbol) {
+                return symbol < gt.symbol;
+            }
+            return destGroup < gt.destGroup;
+        }
+        bool operator==(const GroupTransition& gt) const {
+            return (symbol == gt.symbol) && (destGroup == gt.destGroup);
+        }
+};
+
+class Group {
+    public:
+        set<State> states;
+        set<GroupTransition> transitions;
+        Group(set<State> i_states) {
+            states = i_states;
+        }
+        Group(set<GroupTransition> new_transitions, State s) {
+            transitions = new_transitions;
+            states.insert(s);
+        }
+
+        void addTrans(Symbol a, int dest) {
+            GroupTransition trans = GroupTransition(a, dest);
+            transitions.insert(trans);
+        }
+
+        int getDest(Symbol a) {
+            for (GroupTransition trans: transitions) {
+                if (trans.symbol == a) {
+                    return trans.destGroup;
+                }
+            }
+            return -1;
+        }
+
+};
+
+// functions
 
 bool in(string s, char c) {
     for (char ch:s) {
@@ -558,5 +630,10 @@ bool isExpValid(string expression) {
     }
     
     return true;
+}
+
+string getResult(bool b) {
+    if (b) return "Sí";
+    return "No";
 }
 #endif

@@ -6,7 +6,9 @@ OBJS = $(SRCS:.cpp=.o)
 
 MAIN = lexer
 
-GENS = graph.dot graph.png *fa*.dot *fa*.png
+PNGS = graph.png *fa*.png
+
+DOTS = graph.dot *fa*.dot
 
 all: $(MAIN)
 
@@ -17,4 +19,6 @@ $(MAIN): $(OBJS)
 	$(CXX) -c $< -o $@
 
 clean:
-	$(RM) $(OBJS) $(MAIN) $(GENS)
+	$(RM) $(OBJS) $(MAIN) $(DOTS) $(PNGS)
+clean_dots:
+	$(RM) $(DOTS)
