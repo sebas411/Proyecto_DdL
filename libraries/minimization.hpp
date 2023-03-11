@@ -63,9 +63,11 @@ DFA minimize(DFA automatonA) {
         partition = new_partition;
         if (same) break;
     }
+    
     bool was_initial_state_found = false;
     State representatives[partition.size()];
-    // set states, initial_state and final_states
+    // set states, symbols, initial_state and final_states
+    automatonB.symbols = automatonA.symbols;
     for (int i = 0; i < partition.size(); i++) {
         Group G = partition[i];
         bool is_representative_set = false;
@@ -94,5 +96,36 @@ DFA minimize(DFA automatonA) {
             automatonB.transitions.push_back(Transition(representatives[i], representatives[gt.destGroup], gt.symbol));
         }
     }
+
+    // eliminate the dead state
+    for (State s: Substraction(automatonB.states, automatonB.final_states)) {
+        // check if it is dead state
+        bool goes_to_same = true;
+        for (Symbol sym: automatonB.symbols) {
+            vector<Transition>::iterator it = automatonB.transitions.begin();
+            while (it != automatonB.transitions.end()) {
+                if (it->origin_state == s && it->symbol == sym) {
+                    break;
+                }
+                it++;
+            }
+            if (it->destiny_state != s) {
+                goes_to_same = false;
+                break;
+            }
+        }
+        // if it is erase it
+        if (goes_to_same) {
+            automatonB.states.erase(s);
+            vector<Transition>::iterator it = automatonB.transitions.begin();
+            while (it != automatonB.transitions.end()) {
+                Transition t = *it;
+                if (t.origin_state == s || t.destiny_state == s) {
+                    it = automatonB.transitions.erase(it);
+                } else it++;
+            }
+        }
+    }
+
     return automatonB;
 }
