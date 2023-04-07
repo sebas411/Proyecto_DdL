@@ -30,7 +30,9 @@ void setFollowPos(TreeNode *tree, set<int> *followPos, Symbol *syms) {
     if (tree) {
         setFollowPos(tree->left, followPos, syms);
         setFollowPos(tree->right, followPos, syms);
-        if (tree->value == '~') {
+        if (tree->left == NULL && tree->right == NULL) {
+            syms[tree->position-1] = Symbol(tree->value);
+        } else if (tree->value == '~') {
             for (int i: tree->left->lastPos) {
                 followPos[i-1] = Union(followPos[i-1], tree->right->firstPos);
             }
@@ -38,10 +40,6 @@ void setFollowPos(TreeNode *tree, set<int> *followPos, Symbol *syms) {
             for (int i: tree->lastPos) {
                 followPos[i-1] = Union(followPos[i-1], tree->firstPos);
             }
-            cout << endl;
-        }
-        if (tree->left == NULL && tree->right == NULL) {
-            syms[tree->position-1] = Symbol(tree->value);
         }
     }
 }

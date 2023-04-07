@@ -183,6 +183,14 @@ class Symbol {
                 return "\u03b5";
             } else if (c_id == '"') {
                 return "\\\"";
+            } else if (c_id == ' ') {
+                return "' '";
+            } else if (c_id == '\n') {
+                return "\\\\n";
+            } else if (c_id == '\t') {
+                return "\\\\t";
+            } else if (c_id == '\\') {
+                return "\\\\";
             }
             return string(1, c_id);
         }
@@ -323,18 +331,30 @@ class DFA : public Automaton {
                     return t.destiny_state;
                 }
             }
-            return -1;
+            return State(-1);
         }
-        bool simulate(string input) {
+        pair<bool, int> simulate(string input, int i_counter=0) {
+            // returns a pair containing a boolean indicating if the string contains the regexp
+            // and an int indicating the last position that matched the regular expression
+            pair<bool,int> status;
+            status.first = false;
+            status.second = i_counter;
             State s = initial_state;
-            for (char c: input) {
+            for (int i = i_counter; i < input.length(); i++) {
+                char c = input[i];
                 Symbol sym(c);
                 s = move(s, sym);
+                if (s.getid() == -1) {
+                    return status;
+                }
+                if (final_states.find(s) != final_states.end()) {
+                    status.first = true;
+                    status.second = i;
+                } else {
+                    if (status.first == true) return status;
+                }
             }
-            if (final_states.find(s) != final_states.end()) {
-                return true;
-            }
-            return false;
+            return status;
         }
 };
 
@@ -409,6 +429,12 @@ void printTree(TreeNode *node, int indent = 0) {
             cout << "ε";
         } else if (node->value == '~' && node->left != NULL) {
             cout << "◯";
+        } else if (node->value == '\n') {
+            cout << "\\n";
+        } else if (node->value == '\t') {
+            cout << "\\t";
+        } else if (node->value == ' ') {
+            cout << "' '";
         } else {
             cout << node->value;
         }
@@ -527,14 +553,20 @@ bool isExpValid(string expression) {
     int firstParenthesis = 0;
     int wrong = 0;
     int errtype = 0;
+    string left_associative = "?+*|";
     
 
     for (int i = 0; i < expression.length(); i++) {
         if (!valid) break;
         char c = expression[i];
+        char next_c;
+
+        if (i == expression.length() - 1) next_c = '\0';
+        else next_c = expression[i + 1];
+
         switch (c) {
             case '\\':
-                if (i + 1 >= expression.length()) {
+                if (next_c == '\0') {
                     wrong = i;
                     errtype = 3;
                 }
@@ -545,6 +577,11 @@ bool isExpValid(string expression) {
                     numParentheses++;
                     if (numParentheses == 1) {
                         wrong = i;
+                    }
+                    if (in(left_associative, next_c)) {
+                        wrong = i + 1;
+                        valid = false;
+                        errtype = 2;
                     }
                 }
                 escaped = false;
@@ -562,7 +599,7 @@ bool isExpValid(string expression) {
                 break;
             case '*':
                 if (!escaped) {
-                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                    if (lastc == '\0') {
                         wrong = i;
                         valid = false;
                         errtype = 2;
@@ -572,7 +609,7 @@ bool isExpValid(string expression) {
                 break;
             case '+':
                 if (!escaped) {
-                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                    if (lastc == '\0') {
                         wrong = i;
                         valid = false;
                         errtype = 2;
@@ -582,7 +619,7 @@ bool isExpValid(string expression) {
                 break;
             case '?':
                 if (!escaped) {
-                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                    if (lastc == '\0') {
                         wrong = i;
                         valid = false;
                         errtype = 2;
@@ -592,7 +629,7 @@ bool isExpValid(string expression) {
                 break;
             case '|':
                 if (!escaped) {
-                    if (lastc == '\0' || lastc == '(' || lastc == '|') {
+                    if (lastc == '\0' || in(left_associative, next_c)) {
                         wrong = i;
                         valid = false;
                         errtype = 2;

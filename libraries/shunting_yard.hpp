@@ -12,36 +12,56 @@ string shuntingYard(string infix) {
     precedence['|'] = 0;
     precedence['('] = -1;
 
-    string ops = "|+?*()";
-    string right_concat = "(";
+    string ops = "|+?*()\\";
+    string right_concat = "(\\";
     string left_concat = ")*?+";
 
     //concatted += infix[0];
-
+    bool escaped = false;
     char prevc = '\0';
     for (int i = 0; i < infix.length(); i++) {
         char c = infix[i];
-        if (prevc != '\0' && 
-           (in(left_concat, prevc) || !in(ops, prevc)) && // left
+        if (prevc != '\0' && prevc != '\\' &&
+           (in(left_concat, prevc) || !in(ops, prevc) || escaped) && // left
            (in(right_concat, c)    || !in(ops, c)))       // right
         { 
             concatted += '~';
         }
-        if (c == '~') {
+
+        if (escaped) {
+            escaped = false;
+            if (c == '(') {
+                prevc = c;
+                concatted += c;
+                concatted += '~';
+                continue;
+            }
+        } else if (c == '~') {
             concatted += '\\';
-        }
-        if (c == ')' && prevc == '(') {
+        } else if (c == '\\') {
+            escaped = true;
+        } else if (c == ')' && prevc == '(') {
             concatted += (char)(-1);
+        } else if (c == '.') {
+            concatted += "(\n|\t| ";
+            for (char i = 33; i < 127; i++) {
+                concatted += '|';
+                if (in(ops, i) || i == '~') concatted += '\\';
+                concatted += i;
+            }
+            concatted += ')';
+            prevc = c;
+            continue;
         }
         concatted += c;
         prevc = c;
     }
 
-    // cout << concatted << endl;
+    //cout << concatted << endl;
 
     stack<char> operators;
     
-    bool escaped = false;
+    escaped = false;
     for (int i=0; i < concatted.length(); i++) {
         if (escaped) {
             escaped = false;
@@ -88,8 +108,18 @@ TreeNode* postfixToTree(string postfix) {
     bool escaped = false;
 
     for (char c: postfix) {
-        if (!in(ops, c) || escaped) {
+        if (!in(ops, c) && !escaped) {
             TreeNode *node = new TreeNode(c);
+            tree_stack.push(node);
+        } else if (escaped) {
+            TreeNode *node;
+            if (c == 'n') {
+                node = new TreeNode('\n');
+            } else if (c == 't') {
+                node = new TreeNode('\t');
+            } else {
+                node = new TreeNode(c);
+            }
             tree_stack.push(node);
             escaped = false;
         } else {
