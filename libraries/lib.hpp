@@ -534,10 +534,14 @@ string subepsilon(const string str) {
     return output;
 }
 
-void coutEpsilonSafe(string expression) {
+void coutSafe(string expression) {
     for (char c : expression) {
         if (c == -1) {
             cout << "\u03b5";
+        } else if (c == '\n') {
+            cout << "\\n";
+        } else if (c == '\t') {
+            cout << "\\t";
         } else {
             cout << c;
         }
@@ -648,7 +652,7 @@ bool isExpValid(string expression) {
         errtype = 1;
     }
     if (!valid) {
-        coutEpsilonSafe(expression);
+        coutSafe(expression);
         for (int i = 0; i < wrong; i++) cout << " ";
         cout << '^' << endl;
         if (errtype == 1) {

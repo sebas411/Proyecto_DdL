@@ -16,7 +16,7 @@ string shuntingYard(string infix) {
     string right_concat = "(\\";
     string left_concat = ")*?+";
 
-    //concatted += infix[0];
+    // preprocesamiento
     bool escaped = false;
     char prevc = '\0';
     for (int i = 0; i < infix.length(); i++) {
@@ -31,10 +31,12 @@ string shuntingYard(string infix) {
         if (escaped) {
             escaped = false;
             if (c == '(') {
-                prevc = c;
-                concatted += c;
-                concatted += '~';
-                continue;
+                if (!in(ops, infix[i+1])|| in(right_concat, infix[i+1])) {
+                    prevc = c;
+                    concatted += c;
+                    concatted += '~';
+                    continue;
+                }
             }
         } else if (c == '~') {
             concatted += '\\';
@@ -57,7 +59,7 @@ string shuntingYard(string infix) {
         prevc = c;
     }
 
-    //cout << concatted << endl;
+    //cout << "Pre-procesado: "<< concatted << endl;
 
     stack<char> operators;
     
