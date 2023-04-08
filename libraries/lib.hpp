@@ -424,7 +424,7 @@ void printTree(TreeNode *node, int indent = 0) {
         // print right tree
         printTree(node->right, indent + 1);
         // begin print value
-        cout << string(indent * 4, ' ');
+        cout << string(indent * 2, ' ');
         if (node->value == -1){
             cout << "ε";
         } else if (node->value == '~' && node->left != NULL) {
