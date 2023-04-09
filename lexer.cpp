@@ -173,6 +173,7 @@ int main(int argc, char *argv[]){
                 for (char c: captures) {
                     if (first_capture) first_capture = false;
                     else capture_str += '|';
+                    if (in(ops, c)) capture_str += '\\';
                     capture_str += c;
                 }
                 capture_str += ')';
