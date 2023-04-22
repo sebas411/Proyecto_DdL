@@ -1,5 +1,23 @@
 #include "lib.hpp"
 
+bool isFinalCheck(State dState, set<State> nFinalStates, int *accept_pattern) {
+    bool flag = false;
+    int matching_accept_pattern = -1;
+    for (State s : dState.NFA_States) {
+        for (State n_s : nFinalStates) {
+            if (s == n_s) {
+                flag = true;
+                if (matching_accept_pattern == -1 || n_s.accepting_pattern < matching_accept_pattern) {
+                    matching_accept_pattern = n_s.accepting_pattern;
+                }
+                break;
+            }
+        }
+    }
+    if (flag) *accept_pattern = matching_accept_pattern;
+    return flag;
+}
+
 DFA subsetConstruction(NFA Nautomaton) {
     DFA Dautomaton = DFA();
     // initially, e-closure(s0) is the only state in Dstates, and it is unmarked;
@@ -7,7 +25,9 @@ DFA subsetConstruction(NFA Nautomaton) {
     Dautomaton.initial_state = ini;
     Dautomaton.symbols = Nautomaton.symbols;
     Dautomaton.states.insert(ini);
-    if (ini.NFA_States.find(Nautomaton.thompsonFinal) != ini.NFA_States.end()) {
+    int accept_pattern;
+    if (isFinalCheck(ini,Nautomaton.final_states, &accept_pattern)) {
+        ini.accepting_pattern = accept_pattern;
         Dautomaton.final_states.insert(ini);
     }
     stack<State> state_stack;
@@ -41,7 +61,9 @@ DFA subsetConstruction(NFA Nautomaton) {
                 State new_state = State(counter, U);
                 counter += 1;
                 Dautomaton.states.insert(new_state);
-                if (new_state.NFA_States.find(Nautomaton.thompsonFinal) != new_state.NFA_States.end()) {
+                
+                if (isFinalCheck(new_state, Nautomaton.final_states, &accept_pattern)) {
+                    new_state.accepting_pattern = accept_pattern;
                     Dautomaton.final_states.insert(new_state);
                 }
                 state_stack.push(new_state);

@@ -3,11 +3,27 @@
 DFA minimize(DFA automatonA) {
     DFA automatonB;
     
-    vector<Group> partition;
+    vector<Group> partition, accepting_groups;
 
     // create initial partition with 2 groups, accepting and non accepting states
     partition.push_back(Group(Substraction(automatonA.states, automatonA.final_states)));
-    partition.push_back(Group(automatonA.final_states));
+    for (State s: automatonA.final_states) {
+        bool flag = false;
+        for (Group g: accepting_groups) {
+            if (s.accepting_pattern == g.accepting_pattern) {
+                flag = true;
+                g.states.insert(s);
+            }
+        }
+        if (!flag) {
+            set<State> accepting_group;
+            accepting_group.insert(s);
+            accepting_groups.push_back(Group(accepting_group));
+        }
+    }
+    for (Group g: accepting_groups) {
+        partition.push_back(g);
+    }
 
     while (true) {
         vector<Group> new_partition;
@@ -63,7 +79,7 @@ DFA minimize(DFA automatonA) {
         partition = new_partition;
         if (same) break;
     }
-    
+
     bool was_initial_state_found = false;
     State representatives[partition.size()];
     // set states, symbols, initial_state and final_states

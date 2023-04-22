@@ -1,6 +1,6 @@
 # Proyecto Diseño de lenguajes de programación
 
-## Laboratorio C
+## Laboratorio D
 
 ### Dependencias
 * GCC (para compilar)
@@ -8,11 +8,11 @@
 ### Compilación y ejecución
 Para compilar el programa:  
 ``` bash
-make yalex
+make lexer
 ```
 Para ejecutarlo:  
 ``` bash
-./yalex "filename"
+./lexer "filename"
 ```
 Para limpiar los archivos creados por la compilación y ejecución del programa:  
 ``` bash

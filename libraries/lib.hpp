@@ -134,6 +134,7 @@ class State {
         int id;
     public:
         set<State> NFA_States;
+        int accepting_pattern;
         State(int i) {
             id = i;
         }
@@ -249,12 +250,17 @@ class Automaton {
             }
             return max;
         }
-        void merge(Automaton a) {
+        void merge(Automaton a, bool mergeTransition=false) {
             for (State s : a.states) {
                 states.insert(s);
             }
             for (Symbol s : a.symbols) {
                 symbols.insert(s);
+            }
+            if (mergeTransition) {
+                for (Transition t : a.transitions) {
+                    transitions.push_back(t);
+                }
             }
         }
         bool simulate(string input);
@@ -356,6 +362,28 @@ class DFA : public Automaton {
             }
             return status;
         }
+
+        int lexical_simulate(string input, bool *found, int *patt, int curr_char = 0) {
+            // returns matching pattern, and bool found using pointers and currchar as func return type
+            *found = false;
+            *patt = -1;
+            int last_char = -1;
+            State s = initial_state;
+            for (int i = curr_char; i < input.length(); i++) {
+                char c = input[i];
+                Symbol sym(c);
+                s = move(s, sym);
+                if (s.getid() == -1) {
+                    return last_char;
+                }
+                if (final_states.find(s) != final_states.end()) {
+                    *found = true;
+                    last_char = i;
+                    *patt = s.accepting_pattern;
+                }
+            }
+            return last_char;
+        }
 };
 
 class GroupTransition {
@@ -380,6 +408,7 @@ class GroupTransition {
 class Group {
     public:
         set<State> states;
+        int accepting_pattern = -1;
         set<GroupTransition> transitions;
         Group(set<State> i_states) {
             states = i_states;

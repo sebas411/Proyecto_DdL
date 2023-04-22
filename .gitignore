@@ -5,4 +5,5 @@ graph.dot
 graph.png
 lexer.o
 lexer
-old_lexer
+test
+test.cpp
