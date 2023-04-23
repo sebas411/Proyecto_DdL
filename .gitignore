@@ -7,3 +7,5 @@ lexer.o
 lexer
 test
 test.cpp
+scanner
+scanner.cpp

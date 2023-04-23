@@ -30,8 +30,6 @@ DFA MakeLexAnalyzer(vector<string> regexes) {
         current_accepting_pattern++;
     }
     DFA dautomata = subsetConstruction(nautomata);
-    cout << "before minimization" << endl;
     DFA min_dautomata = minimize(dautomata);
-    cout << "after minimization" << endl;
     return min_dautomata;
 }
