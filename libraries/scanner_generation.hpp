@@ -1,4 +1,4 @@
-#include "libraries/lib.hpp"
+#include "lib.hpp"
 
 void generate_scanner(vector<string> regexes, vector<string> executions, string preexecution, string postexecution) {
     ofstream MyFile("scanner.cpp");

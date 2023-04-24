@@ -702,6 +702,16 @@ bool isExpValid(string expression) {
     return true;
 }
 
+string fix_escapes(string str) {
+    string output = "";
+    for (char c: str) {
+        if (c == '\n') output += "\\n";
+        else if (c == '\\') output += "\\\\";
+        else output += c;
+    }
+    return output;
+}
+
 string getResult(bool b) {
     if (b) return "Sí";
     return "No";

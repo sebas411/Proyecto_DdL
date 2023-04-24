@@ -9,6 +9,7 @@
 #include "libraries/subset_construction.hpp"
 #include "libraries/direct_construction.hpp"
 #include "libraries/minimization.hpp"
+#include "libraries/scanner_generation.hpp"
 
 string handleRegDef(string regDef) {
     return "";
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]){
     // end file handling
 
     // begin declaration of useful regular expressions
+    cout << "Generating automatons for yalex recognition..." << endl;
     string letters = "(A|a";
     for (char i = 1; i < 26; i++) {
         letters += '|';
@@ -43,7 +45,6 @@ int main(int argc, char *argv[]){
         letters += (i+97);
     }
     letters += ")+";
-
     TreeNode *comment_tree = postfixToTree(shuntingYard("\\(\\*.*\\*\\)"));
     TreeNode *ws_tree = postfixToTree(shuntingYard("( |\n|\t)*"));
     TreeNode *let_tree = postfixToTree(shuntingYard("let "));
@@ -66,22 +67,28 @@ int main(int argc, char *argv[]){
     DFA capture = directConstruction(capture_tree);
     DFA anti_capture = directConstruction(anti_capture_tree);
     DFA rule = directConstruction(rule_tree);
-    DFA code = directConstruction(code_tree);
 
-    /**
-     * W -> \(\*.*\*\)| |\n|\t|()
-     * F -> WLWRW
-     * L -> letWNW=WEWL|()
-     * R
-     */
+    // some regular expressions needed to be minimized because otherwise they took to much time
+    cout << "Minimizing some automatons for rule reading..." << endl;
+    single_char = minimize(single_char);
+    comment = minimize(comment);
+    string_A = minimize(string_A);
 
     //file reading
+    cout << "Reading let definitions..." << endl;
+    string first_execution = "";
+    bool is_first_execution_set = false;
     int current_char = 0;
     bool in_let = false;
     while (!in_let) {
         pair<bool, int> ws_status = ws.simulate(str, current_char);
         if (ws_status.first) current_char = ws_status.second + 1;
         pair<bool, int> comment_status = comment.simulate(str,current_char);
+        if (!is_first_execution_set && comment_status.first) {
+            int distance = comment_status.second - current_char;
+            string code_test = str.substr(current_char + 2, distance - 3);
+            first_execution = code_test;
+        }
         if (comment_status.first) current_char = comment_status.second + 1;
         if (!(ws_status.first || comment_status.first)) in_let = true;
     }
@@ -101,7 +108,6 @@ int main(int argc, char *argv[]){
         int name_last_char = name.simulate(str, current_char).second + 1;
         string let_name = str.substr(current_char, name_last_char - current_char);
         current_char = name_last_char;
-        cout << "Def_name: " << let_name << endl;
         current_char = ws.simulate(str, current_char).second + 1; // move after name
         if (str[current_char] != '=') {
             cout << "error en lectura" << endl;
@@ -118,7 +124,6 @@ int main(int argc, char *argv[]){
             current_char++;
         }
         int reg_def_current_char = 0;
-        cout << "Reg_def: " << reg_def << endl;
         string fixed_reg_def = "(";
         while (reg_def_current_char < reg_def.length()) {
             status = capture.simulate(reg_def, reg_def_current_char);
@@ -224,7 +229,6 @@ int main(int argc, char *argv[]){
             reg_def_current_char++;
         }
         fixed_reg_def += ')';
-        cout << "Fixed_reg_def: " << fixed_reg_def << endl << endl;
         TreeNode *reg_def_tree = postfixToTree(shuntingYard(let_name));
 
         pair<DFA, string> reg_def_pair;
@@ -250,14 +254,16 @@ int main(int argc, char *argv[]){
 
     current_char = ws.simulate(str, current_char).second + 1; // move after =
 
-    // some regular expressions needed to be minimized because otherwise they took to much time
-    single_char = minimize(single_char);
-    code = minimize(code);
-    comment = minimize(comment);
-    string_A = minimize(string_A);
 
-    string final_definition = "";
+    string temp_definition = "";
     pair<bool, int> status;
+    vector<string> executions;
+    vector<string> regexps;
+    string current_execution = "";
+    string last_execution = "";
+
+    cout << "Reading rules..." << endl;
+    // rules
     while (current_char < str.length()) {
         status = name.simulate(str, current_char);
         if (status.first) {
@@ -276,7 +282,7 @@ int main(int argc, char *argv[]){
             }
             if (matching_name != -1) {
                 pair<DFA, string> matching_reg_def = reg_defs[matching_name];
-                final_definition += matching_reg_def.second;
+                temp_definition += matching_reg_def.second;
             }
             current_char = status.second + 1;
             continue;
@@ -289,37 +295,70 @@ int main(int argc, char *argv[]){
                 if (c == 'n') c = '\n';
                 if (c == 't') c = '\t';
             }
-            if (in(ops, c) || c == '.') final_definition += '\\';
-            final_definition += c;
+            if (in(ops, c) || c == '.') temp_definition += '\\';
+            temp_definition += c;
             current_char = status.second + 1;
             continue;
         }
         status = string_A.simulate(str, current_char);
         if (status.first) {
             int distance = status.second - current_char;
-            final_definition += str.substr(current_char + 1, distance - 1);
+            temp_definition += str.substr(current_char + 1, distance - 1);
             current_char = status.second + 1;
             continue;
         }
-        status = code.simulate(str, current_char);
-        if (status.first) {
-            current_char = status.second + 1;
+        
+        if (str[current_char] == '{') {
+            string code_extract = "";
+            current_char++;
+            int layer = 1;
+            while (true) {
+                if (str[current_char] == '}') {
+                    layer--;
+                    if (layer == 0) break;
+                }
+                if (str[current_char] == '{') layer++;
+                code_extract += str[current_char];
+                current_char++;
+            }
+            current_execution = code_extract;
             continue;
         }
         status = comment.simulate(str, current_char);
         if (status.first) {
+            int distance = status.second - current_char;
+            string code_test = str.substr(current_char + 2, distance - 3);
             current_char = status.second + 1;
+            last_execution = code_test;
             continue;
         }
-        if (str[current_char] == '|') final_definition += '|';
+        if (str[current_char] == '*' || str[current_char] == '+') {
+            temp_definition += str[current_char];
+        }
+        if (str[current_char] == '|') {
+            regexps.push_back(fix_escapes(temp_definition));
+            executions.push_back(current_execution);
+            temp_definition = "";
+            current_execution = "";
+            last_execution = "";
+        }
         current_char++;
     }
-    cout << "Final regular expresion: ";
-    coutSafe(final_definition);
-    cout << endl;
-
-    TreeNode *final_tree = postfixToTree(shuntingYard(final_definition));
-    printTree(final_tree);
+    regexps.push_back(fix_escapes(temp_definition));
+    executions.push_back(current_execution);
+    // cout << "First execution: " << first_execution << endl;
+    // cout << "Regexps: " << regexps.size() << ", Executions: " << executions.size() << endl;
+    // for (int i = 0; i < regexps.size(); i++) {
+    //     string reg = regexps[i];
+    //     string exec = executions[i];
+    //     cout << "    Regexp: ";
+    //     coutSafe(reg);
+    //     cout << ", Execution: " << exec << endl;
+    // }
+    // cout << "Final execution: " << last_execution << endl;
+    cout << "Generating scanner..." << endl;
+    generate_scanner(regexps, executions, first_execution, last_execution);
+    cout << "Done :)" << endl;
     
     return 0;
 }
