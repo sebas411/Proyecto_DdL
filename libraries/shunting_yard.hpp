@@ -34,7 +34,8 @@ string shuntingYard(string infix) {
                 if (!in(ops, infix[i+1])|| in(right_concat, infix[i+1])) {
                     prevc = c;
                     concatted += c;
-                    concatted += '~';
+                    if (infix[i+1] != '\0')
+                        concatted += '~';
                     continue;
                 }
             }

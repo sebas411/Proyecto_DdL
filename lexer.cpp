@@ -55,7 +55,6 @@ int main(int argc, char *argv[]){
     TreeNode *capture_tree = postfixToTree(shuntingYard("[.+]"));
     TreeNode *anti_capture_tree = postfixToTree(shuntingYard("[^.+]"));
     TreeNode *rule_tree = postfixToTree(shuntingYard("rule"));
-    TreeNode *code_tree = postfixToTree(shuntingYard("{.*}"));
 
     DFA comment = directConstruction(comment_tree);
     DFA ws = directConstruction(ws_tree);
@@ -201,6 +200,13 @@ int main(int argc, char *argv[]){
                 }
                 if (c == '.') fixed_reg_def += '\\';
                 fixed_reg_def += c;
+                reg_def_current_char = status.second + 1;
+                continue;
+            }
+            status = string_A.simulate(reg_def, reg_def_current_char);
+            if (status.first) {
+                int distance = status.second - reg_def_current_char;
+                fixed_reg_def += reg_def.substr(reg_def_current_char + 1, distance - 1);
                 reg_def_current_char = status.second + 1;
                 continue;
             }

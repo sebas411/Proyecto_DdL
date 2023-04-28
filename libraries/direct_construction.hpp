@@ -26,12 +26,17 @@ TreeNode* fixTree(TreeNode *tree) {
     return newTree;
 }
 
-void setFollowPos(TreeNode *tree, set<int> *followPos, Symbol *syms) {
+void setFollowPos(TreeNode *tree, set<int> *followPos, Symbol *syms, set<State> *accepting_positions) {
     if (tree) {
-        setFollowPos(tree->left, followPos, syms);
-        setFollowPos(tree->right, followPos, syms);
+        setFollowPos(tree->left, followPos, syms, accepting_positions);
+        setFollowPos(tree->right, followPos, syms, accepting_positions);
         if (tree->left == NULL && tree->right == NULL) {
             syms[tree->position-1] = Symbol(tree->value);
+            if (tree->accepting_pat >= 0) {
+                State s(tree->position);
+                s.accepting_pattern = tree->accepting_pat;
+                accepting_positions->insert(s);
+            }
         } else if (tree->value == '~') {
             for (int i: tree->left->lastPos) {
                 followPos[i-1] = Union(followPos[i-1], tree->right->firstPos);
@@ -44,13 +49,28 @@ void setFollowPos(TreeNode *tree, set<int> *followPos, Symbol *syms) {
     }
 }
 
-DFA directConstruction(TreeNode *tree) {
+
+DFA directConstruction(vector<TreeNode*> trees) {
+    int current_accepting = 0;
+    TreeNode *initial = trees[0];
     // fix trees that use + and ? and then augment it
-    TreeNode *fixedTree = fixTree(tree);
-    TreeNode *rightNode = new TreeNode('#');
-    TreeNode *augmented = new TreeNode('~', fixedTree, rightNode);
+    TreeNode *ini_fixedTree = fixTree(initial);
+    TreeNode *ini_rightNode = new TreeNode('#');
+    ini_rightNode->accepting_pat = current_accepting;
+    TreeNode *final_tree = new TreeNode('~', ini_fixedTree, ini_rightNode);
+
+    for (int i = 1; i < trees.size(); i++) {
+        current_accepting++;
+        TreeNode *currTree = trees[i];
+        TreeNode *fixedTree = fixTree(currTree);
+        TreeNode *rightNode = new TreeNode('#');
+        rightNode->accepting_pat = current_accepting;
+        TreeNode *augmented = new TreeNode('~', fixedTree, rightNode);
+
+        final_tree = new TreeNode('|', final_tree, augmented);
+    }
     // set positions in tree (also firstpos, lastpos and nullable)
-    int max_position = augmented->setPositions();
+    int max_position = final_tree->setPositions();
 
     // create states for each position
     State pos_states[max_position];
@@ -61,25 +81,29 @@ DFA directConstruction(TreeNode *tree) {
     // create symbols and followpos
     Symbol pos_symbols[max_position];
     set<int> follow_positions[max_position];
-    setFollowPos(augmented, follow_positions, pos_symbols);
-
+    set<State> accepting_positions;
+    setFollowPos(final_tree, follow_positions, pos_symbols, &accepting_positions);
+    int accept_pattern;
 
     DFA Dautomaton = DFA();
     // initialize Dstates to contain only the unmarked state firstpos(n0),
     // where n0 is the root of syntax tree T for (r)#;
     stack<State> Dstates;
     State ini(0);
-    for (int i: augmented->firstPos) {
+    for (int i: final_tree->firstPos) {
         ini.NFA_States.insert(pos_states[i-1]);
     }
     Dautomaton.initial_state = ini;
     Dautomaton.states.insert(ini);
     // check if initial state is accepted
-    if (ini.NFA_States.find(State(max_position)) != ini.NFA_States.end()) {
+    
+    if (isFinalCheck(ini, accepting_positions, &accept_pattern)) {
+        ini.accepting_pattern = accept_pattern;
         Dautomaton.final_states.insert(ini);
     }
     // set DFA symbols to positions' symbols
-    for (int i = 0; i < max_position - 1; i++) {
+    for (int i = 0; i < max_position; i++) {
+        if (accepting_positions.find(State(i+1)) == accepting_positions.end())
         Dautomaton.symbols.insert(pos_symbols[i]);
     }
     Dstates.push(ini);
@@ -120,7 +144,8 @@ DFA directConstruction(TreeNode *tree) {
                 counter += 1;
                 Dautomaton.states.insert(new_state);
                 // check if it is accepted
-                if (new_state.NFA_States.find(State(max_position)) != new_state.NFA_States.end()) {
+                if (isFinalCheck(new_state, accepting_positions, &accept_pattern)) {
+                    new_state.accepting_pattern = accept_pattern;
                     Dautomaton.final_states.insert(new_state);
                 }
                 Dstates.push(new_state);
@@ -130,7 +155,12 @@ DFA directConstruction(TreeNode *tree) {
         }
     }
 
-
-    delete augmented;
+    delete final_tree;
     return Dautomaton;
+}
+
+DFA directConstruction(TreeNode* tree) {
+    vector<TreeNode*> trees;
+    trees.push_back(tree);
+    return directConstruction(trees);
 }

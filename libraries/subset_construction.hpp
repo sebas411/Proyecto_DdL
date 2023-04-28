@@ -1,22 +1,5 @@
 #include "lib.hpp"
 
-bool isFinalCheck(State dState, set<State> nFinalStates, int *accept_pattern) {
-    bool flag = false;
-    int matching_accept_pattern = -1;
-    for (State s : dState.NFA_States) {
-        for (State n_s : nFinalStates) {
-            if (s == n_s) {
-                flag = true;
-                if (matching_accept_pattern == -1 || n_s.accepting_pattern < matching_accept_pattern) {
-                    matching_accept_pattern = n_s.accepting_pattern;
-                }
-                break;
-            }
-        }
-    }
-    if (flag) *accept_pattern = matching_accept_pattern;
-    return flag;
-}
 
 DFA subsetConstruction(NFA Nautomaton) {
     DFA Dautomaton = DFA();

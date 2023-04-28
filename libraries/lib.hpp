@@ -60,25 +60,26 @@ class TreeNode {
         set<int> firstPos;
         set<int> lastPos;
         bool nullable;
+        int accepting_pat;
 
         TreeNode(char x) {
             value = x;
             left = right = NULL;
-            position = -1;
+            accepting_pat = position = -1;
             nullable = false;
         }
         TreeNode(char x, TreeNode *lnode, TreeNode *rnode) {
             value = x;
             left = lnode;
             right = rnode;
-            position = -1;
+            accepting_pat = position = -1;
             nullable = false;
         }
         TreeNode(char x, TreeNode *unique) {
             value = x;
             left = unique;
             right = NULL;
-            position = -1;
+            accepting_pat = position = -1;
             nullable = false;
         }
 
@@ -700,6 +701,24 @@ bool isExpValid(string expression) {
     }
     
     return true;
+}
+
+bool isFinalCheck(State dState, set<State> nFinalStates, int *accept_pattern) {
+    bool flag = false;
+    int matching_accept_pattern = -1;
+    for (State s : dState.NFA_States) {
+        for (State n_s : nFinalStates) {
+            if (s == n_s) {
+                flag = true;
+                if (matching_accept_pattern == -1 || n_s.accepting_pattern < matching_accept_pattern) {
+                    matching_accept_pattern = n_s.accepting_pattern;
+                }
+                break;
+            }
+        }
+    }
+    if (flag) *accept_pattern = matching_accept_pattern;
+    return flag;
 }
 
 string fix_escapes(string str) {

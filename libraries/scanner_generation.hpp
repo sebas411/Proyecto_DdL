@@ -35,7 +35,7 @@ int patt_found, curr_char = 0, next_char = 0;\
 while(true) {\
     next_char = lexy.lexical_simulate(infile, &found, &patt_found, curr_char);\
     if (!found) {\
-        if (!(infile[curr_char] == '\\0')) cout << \"Error en el caracter \" << curr_char << \" (\" << infile[curr_char] << ')' << endl;\
+        if (!(infile[curr_char] == '\\0')) cout << \"Error en el caracter \" << curr_char << \" (\" << infile[curr_char] << \") Token no reconocido\" << endl;\
         break;\
     }"<< endl;
     int i = 0;

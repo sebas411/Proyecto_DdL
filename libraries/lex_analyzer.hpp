@@ -1,7 +1,6 @@
 #include "lib.hpp"
 #include "shunting_yard.hpp"
-#include "thompson.hpp"
-#include "subset_construction.hpp"
+#include "direct_construction.hpp"
 #include "minimization.hpp"
 
 
@@ -12,24 +11,13 @@
 
 DFA MakeLexAnalyzer(vector<string> regexes) {
     int startState = 0, current_accepting_pattern = 0;
-    State initial(startState);
-    startState++;
-    NFA nautomata;
-    nautomata.initial_state=initial;
+    vector<TreeNode*> trees;
     for (string regex: regexes) {
         string postfix = shuntingYard(regex);
         TreeNode *tree = postfixToTree(postfix);
-        NFA sub_automata = Thompson(tree, startState);
-        startState = sub_automata.max_state() + 1;
-
-        nautomata.merge(sub_automata, true);
-        State accepting = sub_automata.thompsonFinal;
-        accepting.accepting_pattern = current_accepting_pattern;
-        nautomata.final_states.insert(accepting);
-        nautomata.transitions.push_back(Transition(initial, sub_automata.initial_state, epsilon));
-        current_accepting_pattern++;
+        trees.push_back(tree);
     }
-    DFA dautomata = subsetConstruction(nautomata);
+    DFA dautomata = directConstruction(trees);
     DFA min_dautomata = minimize(dautomata);
     return min_dautomata;
 }
