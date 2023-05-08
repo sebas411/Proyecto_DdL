@@ -1,6 +1,6 @@
 # Proyecto Diseño de lenguajes de programación
 
-## Laboratorio D
+## Laboratorio E
 
 ### Dependencias
 * GCC (para compilar)
