@@ -11,9 +11,6 @@
 #include "libraries/minimization.hpp"
 #include "libraries/scanner_generation.hpp"
 
-string handleRegDef(string regDef) {
-    return "";
-}
 
 // main
 int main(int argc, char *argv[]){

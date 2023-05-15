@@ -50,10 +50,11 @@ public:
 class LR0State {
     public:
         int id;
+        bool isAccepting;
         set<pair<Production, int>> items;
         map<LR0Symbol, LR0State> transitions;
 
-        LR0State(int id, set<pair<Production, int>> items) : id(id), items(items) {}
+        LR0State(int id, set<pair<Production, int>> items) : id(id), items(items), isAccepting(false) {}
 
         LR0State() : id(-1) {}
 };
@@ -176,6 +177,18 @@ vector<LR0State> generateLR0Automaton(Grammar grammar) {
             states[i] = state;
         }
     }
+
+    for (auto it = states.begin(); it != states.end(); it++) {
+        LR0State & state = *it;
+        for (auto item: state.items) {
+            Production production = item.first;
+            int position = item.second;
+            if (production == grammar.getStart() && position == 1) {
+                state.isAccepting = true;
+            }
+        }
+    }
+
     return states;
 }
 
@@ -185,7 +198,7 @@ void printLR0Automaton(vector<LR0State> states) {
         for (pair<Production, int> item : state.items) {
             Production production = item.first;
             int position = item.second;
-            cout << "  " << production.left.name << " ->";
+            cout << production.left.name << " ->";
             for (int i = 0; i < production.right.size(); i++) {
                 if (i == position) {
                     cout << " .";
@@ -198,10 +211,14 @@ void printLR0Automaton(vector<LR0State> states) {
             cout << endl;
         }
         cout << endl;
+        if (state.transitions.size() > 0)
+            cout << "  Transitions:" << endl;
         for (pair<LR0Symbol, LR0State> transition : state.transitions) {
             LR0Symbol symbol = transition.first;
             cout << "  " << symbol.name << " -> State " << transition.second.id << endl;
         }
+        if (state.isAccepting)
+            cout << "  $ -> accept :)" << endl;
         cout << endl;
     }
 }

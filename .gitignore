@@ -5,6 +5,8 @@ graph.dot
 graph.png
 lexer.o
 lexer
+parser.o
+parser
 test
 test.cpp
 scanner

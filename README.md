@@ -8,18 +8,13 @@
 ### Compilación y ejecución
 Para compilar el programa:  
 ``` bash
-make lexer
+g++ parser.cpp -o parser
 ```
 Para ejecutarlo:  
 ``` bash
-./lexer "filename"
-```
-Para limpiar los archivos creados por la compilación y ejecución del programa:  
-``` bash
-make clean
+./parser yapar_tests/[test]
 ```
 
 #### Notas:
 * El programa fue probado y funciona en linux utilizando `g++ (GCC) 12.2.1 20230201`
-* Se utiliza el carácter `~` para representar la concatenación. No es necesario añadir este carácter cuando se ingresa la expresión regular o la expresión a evaluar, el algoritmo de preprocesamiento lo añade automáticamente y en el caso de que se ingrese un carácter `~` en la expresión regular este automáticamente es escapado para no ser tomado en cuenta como concatenación.
 
