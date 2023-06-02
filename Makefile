@@ -19,6 +19,6 @@ $(MAIN): $(OBJS)
 	$(CXX) -c $< -o $@
 
 clean:
-	$(RM) $(OBJS) $(MAIN) $(DOTS) $(PNGS) test scanner
+	$(RM) $(OBJS) $(MAIN) $(DOTS) $(PNGS) test scanner parser
 clean_dots:
 	$(RM) $(DOTS)

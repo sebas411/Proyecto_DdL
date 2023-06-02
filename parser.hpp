@@ -11,20 +11,13 @@
 #include "libraries/lr0_generator.hpp"
 
 // main
-int main(int argc, char *argv[]) {
-    string filename;
-    if (argc > 1) {
-        filename = argv[1];
-    } else {
-        cout << "Por favor ingrese el nombre del archivo .yal" << endl;
-        return -1;
-    }
+pair<vector<LR0State>, Grammar> parser(string filename) {
     // Store the contents of file in str variable
     ifstream t(filename);
     if (!t.good()) {
         cout << "El archivo '" << filename << "' no se pudo abrir correctamente. :(" << endl;
         cout << "Por favor revise que el archivo exista y tenga los permisos correctos" << endl;
-        return -1;
+        return {{}, Grammar({}, {}, LR0Symbol(), {})};
     }
     string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
     t.close();
@@ -46,11 +39,13 @@ int main(int argc, char *argv[]) {
     TreeNode *terminal_tree = postfixToTree(shuntingYard(Upper));
     TreeNode *nonterminal_tree = postfixToTree(shuntingYard(Lower));
     TreeNode *token_tree = postfixToTree(shuntingYard("%token"));
+    TreeNode *ignore_tree = postfixToTree(shuntingYard("IGNORE"));
     
     DFA ws = directConstruction(ws_tree);
     DFA terminal = directConstruction(terminal_tree);
     DFA nonterminal = directConstruction(nonterminal_tree);
     DFA token = directConstruction(token_tree);
+    DFA ignore = directConstruction(ignore_tree);
     cout << "Minimizing automatons..." << endl;
     terminal = minimize(terminal);
     nonterminal = minimize(nonterminal);
@@ -71,6 +66,7 @@ int main(int argc, char *argv[]) {
     bool isStartSet = false;
     vector<LR0Symbol> terminals;
     vector<LR0Symbol> nonterminals;
+    vector<LR0Symbol> ignoredtok;
     vector<Production> productions;
     LR0Symbol startSym;
 
@@ -81,11 +77,24 @@ int main(int argc, char *argv[]) {
             status = terminal.simulate(str, current_char);
             if (!status.first) break;
             string term = str.substr(current_char, status.second - current_char + 1);
+            if (term == "IGNORE") break;
             terminals.push_back(LR0Symbol(Terminal, term));
             current_char = ws.simulate(str, status.second + 1).second + 1;
         }
-        if (nonterminal.simulate(str, current_char).first)
+        if (nonterminal.simulate(str, current_char).first || ignore.simulate(str, current_char).first)
             in_tok = false;
+    }
+    while (true) {
+        status = ignore.simulate(str, current_char);
+        if (status.first) {
+            current_char = ws.simulate(str, status.second + 1).second + 1;
+            status = terminal.simulate(str, current_char);
+            string term = str.substr(current_char, status.second - current_char + 1);
+            ignoredtok.push_back(LR0Symbol(Terminal, term));
+            current_char = ws.simulate(str, status.second + 1).second + 1;
+        } else {
+            break;
+        }
     }
     cout << "Reading production list..." << endl;
     bool in_prods = true;
@@ -152,6 +161,6 @@ int main(int argc, char *argv[]) {
     cout << "---------------------------------------------------" << endl;
     Grammar grammar(terminals, nonterminals, startSym, productions);
     vector<LR0State> aut_states = generateLR0Automaton(grammar);
-    printLR0Automaton(aut_states);
-    return 0;
+    //printLR0Automaton(aut_states);
+    return {aut_states, grammar};
 }
