@@ -1,3 +1,6 @@
+#ifndef _MINIM_
+#define _MINIM_
+
 #include "lib.hpp"
 
 DFA minimize(DFA automatonA) {
@@ -145,3 +148,4 @@ DFA minimize(DFA automatonA) {
 
     return automatonB;
 }
+#endif

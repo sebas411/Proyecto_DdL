@@ -1,3 +1,6 @@
+#ifndef _THOMP_
+#define _THOMP_
+
 #include "lib.hpp"
 
 NFA Thompson(TreeNode *expression_tree, int start=0) {
@@ -123,3 +126,4 @@ NFA Thompson(TreeNode *expression_tree, int start=0) {
     }
     return NFA();
 }
+#endif

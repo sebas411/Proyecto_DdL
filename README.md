@@ -1,20 +1,20 @@
 # Proyecto Diseño de lenguajes de programación
 
-## Laboratorio E
+# Laboratorio E
 
-### Dependencias
+## Dependencias
 * GCC (para compilar)
 
-### Compilación y ejecución
+## Compilación y ejecución
 Para compilar el programa:  
 ``` bash
-g++ parser.cpp -o parser
+make
 ```
 Para ejecutarlo:  
 ``` bash
-./parser yapar_tests/[test]
+./main final_tests/[test.yalp] final_tests/[test.yal]
 ```
 
-#### Notas:
+### Notas:
 * El programa fue probado y funciona en linux utilizando `g++ (GCC) 12.2.1 20230201`
 

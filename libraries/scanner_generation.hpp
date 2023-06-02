@@ -1,3 +1,6 @@
+#ifndef _SCANGEN_
+#define _SCANGEN_
+
 #include "lib.hpp"
 
 void generate_scanner(vector<string> regexes, vector<string> executions, string preexecution, string postexecution) {
@@ -54,3 +57,4 @@ MyFile <<
     MyFile << "}" << endl;
     MyFile.close();
 }
+#endif

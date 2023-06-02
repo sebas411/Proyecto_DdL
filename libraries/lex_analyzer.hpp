@@ -1,3 +1,6 @@
+#ifndef _LEXANALYZER_
+#define _LEXANALYZER_
+
 #include "lib.hpp"
 #include "shunting_yard.hpp"
 #include "direct_construction.hpp"
@@ -21,3 +24,4 @@ DFA MakeLexAnalyzer(vector<string> regexes) {
     DFA min_dautomata = minimize(dautomata);
     return min_dautomata;
 }
+#endif

@@ -1,3 +1,6 @@
+#ifndef _SHUNT_
+#define _SHUNT_
+
 #include "lib.hpp"
 
 
@@ -145,3 +148,4 @@ TreeNode* postfixToTree(string postfix) {
     }
     return tree_stack.top();
 }
+#endif

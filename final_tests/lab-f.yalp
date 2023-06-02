@@ -10,8 +10,6 @@
 %token ID
 IGNORE WHITESPACE
 
-%%
-
 s:
     l EQUALS r
   | r

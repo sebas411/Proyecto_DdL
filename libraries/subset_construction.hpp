@@ -1,3 +1,6 @@
+#ifndef _SUBCONS_
+#define _SUBCONS_
+
 #include "lib.hpp"
 
 
@@ -57,3 +60,4 @@ DFA subsetConstruction(NFA Nautomaton) {
     }
     return Dautomaton;
 }
+#endif

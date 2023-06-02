@@ -1,3 +1,6 @@
+#ifndef _DIRCONS_
+#define _DIRCONS_
+
 #include "lib.hpp"
 
 TreeNode* fixTree(TreeNode *tree) {
@@ -164,3 +167,4 @@ DFA directConstruction(TreeNode* tree) {
     trees.push_back(tree);
     return directConstruction(trees);
 }
+#endif

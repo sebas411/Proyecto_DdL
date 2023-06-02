@@ -1,14 +1,17 @@
+#ifndef _PARSER_
+#define _PARSER_
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <streambuf>
 
-#include "libraries/lib.hpp"
-#include "libraries/thompson.hpp"
-#include "libraries/shunting_yard.hpp"
-#include "libraries/direct_construction.hpp"
-#include "libraries/minimization.hpp"
-#include "libraries/lr0_generator.hpp"
+#include "lib.hpp"
+#include "thompson.hpp"
+#include "shunting_yard.hpp"
+#include "direct_construction.hpp"
+#include "minimization.hpp"
+#include "lr0_generator.hpp"
 
 // main
 pair<vector<LR0State>, Grammar> parser(string filename) {
@@ -24,7 +27,6 @@ pair<vector<LR0State>, Grammar> parser(string filename) {
     // end file handling
 
     // begin declaration of useful regular expressions
-    cout << "Generating automatons for yalex recognition..." << endl;
     string Upper = "(A";
     string Lower = "(a";
     for (char i = 1; i < 26; i++) {
@@ -46,14 +48,12 @@ pair<vector<LR0State>, Grammar> parser(string filename) {
     DFA nonterminal = directConstruction(nonterminal_tree);
     DFA token = directConstruction(token_tree);
     DFA ignore = directConstruction(ignore_tree);
-    cout << "Minimizing automatons..." << endl;
     terminal = minimize(terminal);
     nonterminal = minimize(nonterminal);
 
     int current_char = 0;
     bool in_tok = false;
     pair<bool, int> status;
-    cout << "Reading token list..." << endl;
     while (!in_tok) {
         status = token.simulate(str, current_char);
         if (status.first) {
@@ -96,7 +96,6 @@ pair<vector<LR0State>, Grammar> parser(string filename) {
             break;
         }
     }
-    cout << "Reading production list..." << endl;
     bool in_prods = true;
     while (in_prods) {
         status = ws.simulate(str, current_char);
@@ -156,11 +155,9 @@ pair<vector<LR0State>, Grammar> parser(string filename) {
             break;
         }
     }
-    cout << "Generating automaton..." << endl;
-    cout << "Automaton ready:" << endl << endl;
-    cout << "---------------------------------------------------" << endl;
     Grammar grammar(terminals, nonterminals, startSym, productions);
     vector<LR0State> aut_states = generateLR0Automaton(grammar);
     //printLR0Automaton(aut_states);
     return {aut_states, grammar};
 }
+#endif

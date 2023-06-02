@@ -1,3 +1,6 @@
+#ifndef _LRLIB_
+#define _LRLIB_
+
 #include "lib.hpp"
 #include <map>
 
@@ -448,3 +451,4 @@ void fillTables(vector<LR0State> states, Grammar grammar, map<LR0Symbol, int> GO
     }
 
 }
+#endif

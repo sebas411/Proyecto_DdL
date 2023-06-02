@@ -1,26 +1,23 @@
+#ifndef _LEXER_
+#define _LEXER_
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <streambuf>
 
-#include "libraries/lib.hpp"
-#include "libraries/thompson.hpp"
-#include "libraries/shunting_yard.hpp"
-#include "libraries/subset_construction.hpp"
-#include "libraries/direct_construction.hpp"
-#include "libraries/minimization.hpp"
-#include "libraries/scanner_generation.hpp"
+#include "lib.hpp"
+#include "thompson.hpp"
+#include "shunting_yard.hpp"
+#include "subset_construction.hpp"
+#include "direct_construction.hpp"
+#include "minimization.hpp"
+#include "scanner_generation.hpp"
 
 
 // main
-int main(int argc, char *argv[]){
-    string filename;
-    if (argc > 1) {
-        filename = argv[1];
-    } else {
-        cout << "Por favor ingrese el nombre del archivo .yal" << endl;
-        return -1;
-    }
+int lexer(string filename){
+    
     // Store the contents of file in str variable
     ifstream t(filename);
     if (!t.good()) {
@@ -33,7 +30,6 @@ int main(int argc, char *argv[]){
     // end file handling
 
     // begin declaration of useful regular expressions
-    cout << "Generating automatons for yalex recognition..." << endl;
     string letters = "(A|a";
     for (char i = 1; i < 26; i++) {
         letters += '|';
@@ -65,13 +61,12 @@ int main(int argc, char *argv[]){
     DFA rule = directConstruction(rule_tree);
 
     // some regular expressions needed to be minimized because otherwise they took to much time
-    cout << "Minimizing some automatons for rule reading..." << endl;
+    
     single_char = minimize(single_char);
     comment = minimize(comment);
     string_A = minimize(string_A);
 
     //file reading
-    cout << "Reading let definitions..." << endl;
     string first_execution = "";
     bool is_first_execution_set = false;
     int current_char = 0;
@@ -249,7 +244,6 @@ int main(int argc, char *argv[]){
     current_char = ws.simulate(str, current_char).second + 1;
     current_char = name.simulate(str, current_char).second + 1;
     current_char = ws.simulate(str, current_char).second + 1;
-
     if (str[current_char] != '=') {
         cout << "error en lectura" << endl;
     }
@@ -265,7 +259,6 @@ int main(int argc, char *argv[]){
     string current_execution = "";
     string last_execution = "";
 
-    cout << "Reading rules..." << endl;
     // rules
     while (current_char < str.length()) {
         status = name.simulate(str, current_char);
@@ -361,7 +354,7 @@ int main(int argc, char *argv[]){
     // cout << "Final execution: " << last_execution << endl;
     cout << "Generating scanner..." << endl;
     generate_scanner(regexps, executions, first_execution, last_execution);
-    cout << "Done :)" << endl;
     
     return 0;
 }
+#endif

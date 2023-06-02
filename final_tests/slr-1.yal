@@ -1,4 +1,4 @@
-(* Lexer para Gramática No. 1 - Expresiones aritméticas simples para variables *)
+(* Lexer para Gramatica No. 1 - Expresiones aritmeticas simples para variables *)
 
 (* Introducir cualquier header aqui *)
 
@@ -10,7 +10,7 @@ let id = letter(letter|digit)*
 
 rule tokens = 
     ws
-  | id        { return ID }               (* Cambie por una acción válida, que devuelva el token *)
+  | id        { return ID }               (* Cambie por una accion valida, que devuelva el token *)
   | '+'       { return PLUS }
   | '*'       { return TIMES }
   | '('       { return LPAREN }

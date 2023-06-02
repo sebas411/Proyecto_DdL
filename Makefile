@@ -1,24 +1,15 @@
-CXX = g++
-
-SRCS = lexer.cpp
-
 OBJS = $(SRCS:.cpp=.o)
-
-MAIN = lexer
 
 PNGS = graph.png *fa*.png
 
 DOTS = graph.dot *fa*.dot
 
-all: $(MAIN)
+all: main
 
-$(MAIN): $(OBJS)
-	$(CXX) $(OBJS) -o $(MAIN)
-
-%.o: %.cpp
-	$(CXX) -c $< -o $@
+main: main.cpp libraries/lexer.hpp libraries/parser.hpp
+	g++ main.cpp -o main
 
 clean:
-	$(RM) $(OBJS) $(MAIN) $(DOTS) $(PNGS) test scanner parser
+	$(RM) $(OBJS) main $(DOTS) $(PNGS) test scanner parser
 clean_dots:
 	$(RM) $(DOTS)
