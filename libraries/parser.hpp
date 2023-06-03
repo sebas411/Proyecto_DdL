@@ -91,6 +91,7 @@ pair<vector<LR0State>, Grammar> parser(string filename) {
             status = terminal.simulate(str, current_char);
             string term = str.substr(current_char, status.second - current_char + 1);
             ignoredtok.push_back(LR0Symbol(Terminal, term));
+            terminals.erase(remove(terminals.begin(), terminals.end(), LR0Symbol(Terminal, term)), terminals.end());
             current_char = ws.simulate(str, status.second + 1).second + 1;
         } else {
             break;

@@ -1,8 +1,9 @@
 #ifndef _LRLIB_
 #define _LRLIB_
 
-#include "lib.hpp"
 #include <map>
+#include "lib.hpp"
+#include "tabulate/tabulate.hpp"
 
 enum SymbolType {
     Terminal,
@@ -124,7 +125,18 @@ public:
     ActionType actionType;
     int to;
     Action(ActionType actionType, int to) : actionType(actionType), to(to) {}
+    // Action(int actint, int to) : actionType(NoAction), to(to) {
+    //     if (actint == 0) {
+    //         actionType = NoAction;
+    //     }
+    // }
     Action(): actionType(NoAction), to(-1) {}
+    bool operator==(const Action& other) {
+        return (actionType == other.actionType) && (to == other.to);
+    }
+    bool operator!=(const Action& other) {
+        return !((actionType == other.actionType) && (to == other.to));
+    }
 };
 
 set<pair<Production, int>> closure(set<pair<Production, int>> items, Grammar grammar) {
@@ -248,14 +260,19 @@ set<LR0Symbol> computeFirst(Grammar grammar, LR0Symbol X) {
     return FIRST_X;
 }
 
-set<LR0Symbol> computeFollow(Grammar grammar, LR0Symbol X) {
+set<LR0Symbol> computeFollow(Grammar grammar, LR0Symbol X, set<LR0Symbol> computed = {}) {
     set<LR0Symbol> FOLLOW_X;
+    if (computed.count(X) > 0) {
+        return FOLLOW_X;
+    }
     LR0Symbol endMarker(Accepting, "$");
     LR0Symbol EPSILON(Epsilon, "ε");
 
     if (X == grammar.startSym) {
         FOLLOW_X.insert(endMarker);  // Insert your representation of the end-of-input marker here
     }
+    
+    computed.insert(X);
 
     for (Production production : grammar.productions) {
         vector<LR0Symbol> symbols = production.right;
@@ -277,7 +294,7 @@ set<LR0Symbol> computeFollow(Grammar grammar, LR0Symbol X) {
                         }
 
                         if (FIRST_next.count(EPSILON) > 0 && production.left != X) {
-                            set<LR0Symbol> FOLLOW_A = computeFollow(grammar, production.left);
+                            set<LR0Symbol> FOLLOW_A = computeFollow(grammar, production.left, computed);
                             FOLLOW_X.insert(FOLLOW_A.begin(), FOLLOW_A.end());
                         }
                     } else {
@@ -285,7 +302,7 @@ set<LR0Symbol> computeFollow(Grammar grammar, LR0Symbol X) {
                     }
                 } else {
                     if (production.left != X) {
-                        set<LR0Symbol> FOLLOW_A = computeFollow(grammar, production.left);
+                        set<LR0Symbol> FOLLOW_A = computeFollow(grammar, production.left, computed);
                         FOLLOW_X.insert(FOLLOW_A.begin(), FOLLOW_A.end());
                     }
                 }
@@ -389,7 +406,7 @@ void printLR0Automaton(vector<LR0State> states) {
     }
 }
 
-void fillTables(vector<LR0State> states, Grammar grammar, map<LR0Symbol, int> GOTO[], map<LR0Symbol, Action> ACTION[]) {
+bool fillTables(vector<LR0State> states, Grammar grammar, map<LR0Symbol, int> GOTO[], map<LR0Symbol, Action> ACTION[]) {
     int nStates = states.size();
     Grammar nonLeftRecursiveGrammar = eliminateLeftRecursion(grammar);
 
@@ -443,12 +460,127 @@ void fillTables(vector<LR0State> states, Grammar grammar, map<LR0Symbol, int> GO
                     }
                 }
                 for (LR0Symbol symbol: FOLLOW_A) {
+
+                    if (ACTION[i][symbol].actionType != NoAction && ACTION[i][symbol] != Action(Reduce, reduce_to)) {
+                        cout << "ERROR: Conflict in [" << i << ',' << symbol.name << "] = (s" << ACTION[i][symbol].to << ",r" << reduce_to << ')' << endl;
+                        return false;
+                    }
                     ACTION[i][symbol] = Action(Reduce, reduce_to);
                 }
             }
 
         }
     }
+    return true;
+}
 
+bool simulateTable(map<LR0Symbol, Action> ACTION[], map<LR0Symbol, int> GOTO[], vector<LR0Symbol> tokens, pair<LR0Symbol, int> magnitudes[]) {
+    tokens.push_back(LR0Symbol(Accepting, "$"));
+    int curr_token = 0;
+    LR0Symbol a = tokens[curr_token];
+
+    stack<int> state_stack;
+    state_stack.push(0);
+
+
+    while (true) {
+        int s = state_stack.top();
+        if (ACTION[s][a].actionType == Shift) {
+            int t = ACTION[s][a].to;
+            state_stack.push(t);
+            curr_token++;
+            a = tokens[curr_token];
+        } else if (ACTION[s][a].actionType == Reduce) {
+            pair<LR0Symbol, int> production = magnitudes[ACTION[s][a].to - 1];
+            LR0Symbol nonterminal = production.first;
+            int magnitude = production.second;
+            for (int i = 0; i < magnitude; i++)
+                state_stack.pop();
+            int t = state_stack.top();
+            state_stack.push(GOTO[t][nonterminal]);
+        } else if (ACTION[s][a].actionType == Accept) {
+            break;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+void printGOTOTable(map<LR0Symbol, Action> ACTION[], map<LR0Symbol, int> GOTO[], Grammar grammar, int nStates) {
+    tabulate::Table my_table;
+    tabulate::Table::Row_t first_row;
+    first_row.push_back("State");
+    for (LR0Symbol terminal: grammar.terminals) {
+        first_row.push_back(terminal.name);
+    }
+    first_row.push_back("$");
+    for (LR0Symbol nonterminal: grammar.nonterminals) {
+        first_row.push_back(nonterminal.name);
+    }
+    my_table.add_row(first_row);
+
+    for (int i = 0; i < nStates; i++) {
+        tabulate::Table::Row_t my_row;
+        my_row.push_back(to_string(i));
+        //for terminals
+        for (LR0Symbol symbol: grammar.terminals) {
+            Action action = ACTION[i][symbol];
+            string actstr = "";
+            if (action.actionType == NoAction) {
+                actstr = "";
+            } else if (action.actionType == Shift) {
+                actstr = "s" + to_string(action.to);
+            } else if (action.actionType == Reduce) {
+                actstr = "r" + to_string(action.to);
+            }
+            my_row.push_back(actstr);
+        }
+        // for $
+        LR0Symbol endMarker(Accepting, "$");
+        Action action = ACTION[i][endMarker];
+        string actstr = "";
+        if (action.actionType == NoAction) {
+            actstr = "";
+        } else if (action.actionType == Shift) {
+            actstr = "s" + to_string(action.to);
+        } else if (action.actionType == Reduce) {
+            actstr = "r" + to_string(action.to);
+        } else if (action.actionType == Accept) {
+            actstr = "acc";
+        }
+        my_row.push_back(actstr);
+        // for nonterminals
+        for (LR0Symbol symbol: grammar.nonterminals) {
+            int to = GOTO[i][symbol];
+            if (to != -1)
+                my_row.push_back(to_string(to));
+            else
+                my_row.push_back("");
+        }
+        my_table.add_row(my_row);
+    }
+
+    int row_index = 0;
+    for (auto& row: my_table) {
+        int cell_index = 0;
+        for (auto& cell: row) {
+            if (cell_index == 0) {
+                cell.format().color(tabulate::Color::yellow);
+            } else if (cell_index <= grammar.terminals.size() + 1) {
+                cell.format().color(tabulate::Color::cyan);
+                if (cell_index != 1)
+                cell.format().border_left(" ");
+                
+            } else {
+                cell.format().color(tabulate::Color::green);
+                if (cell_index != grammar.terminals.size() + 2)
+                cell.format().border_left(" ");
+            }
+            cell_index++;
+        }
+        row_index++;
+    }
+    cout << my_table << endl;
 }
 #endif

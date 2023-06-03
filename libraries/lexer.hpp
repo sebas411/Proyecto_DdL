@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <streambuf>
+#include <tuple>
 
 #include "lib.hpp"
 #include "thompson.hpp"
@@ -12,18 +13,17 @@
 #include "subset_construction.hpp"
 #include "direct_construction.hpp"
 #include "minimization.hpp"
-#include "scanner_generation.hpp"
 
 
 // main
-int lexer(string filename){
+tuple<vector<string>, vector<string>, string, string> lexer(string filename){
     
     // Store the contents of file in str variable
     ifstream t(filename);
     if (!t.good()) {
         cout << "El archivo '" << filename << "' no se pudo abrir correctamente. :(" << endl;
         cout << "Por favor revise que el archivo exista y tenga los permisos correctos" << endl;
-        return -1;
+        return {{}, {}, "", ""};
     }
     string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
     t.close();
@@ -351,10 +351,8 @@ int lexer(string filename){
     //     coutSafe(reg);
     //     cout << ", Execution: " << exec << endl;
     // }
-    // cout << "Final execution: " << last_execution << endl;
-    cout << "Generating scanner..." << endl;
-    generate_scanner(regexps, executions, first_execution, last_execution);
+    // cout << "Final execution: " << last_execution << endl;    
     
-    return 0;
+    return {regexps, executions, first_execution, last_execution};
 }
 #endif

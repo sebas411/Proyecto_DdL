@@ -1,6 +1,5 @@
-(* Lexer para Gramatica No. 1 - Expresiones aritmeticas simples para variables *)
+(* vector<LR0Symbol> tokens; *)
 
-(* Introducir cualquier header aqui *)
 
 let delim = [' ''\t''\n']
 let ws = delim+
@@ -10,10 +9,9 @@ let id = letter(letter|digit)*
 
 rule tokens = 
     ws
-  | id        { return ID }               (* Cambie por una accion valida, que devuelva el token *)
-  | '+'       { return PLUS }
-  | '*'       { return TIMES }
-  | '('       { return LPAREN }
-  | ')'       { return RPAREN }
+  | id        { tokens.push_back(LR0Symbol(Terminal, "ID")); }
+  | '+'       { tokens.push_back(LR0Symbol(Terminal, "PLUS")); }
+  | '*'       { tokens.push_back(LR0Symbol(Terminal, "TIMES")); }
+  | '('       { tokens.push_back(LR0Symbol(Terminal, "LPAREN")); }
+  | ')'       { tokens.push_back(LR0Symbol(Terminal, "RPAREN")); }
 
-(* Introducir cualquier trailer aqui *)

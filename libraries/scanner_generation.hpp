@@ -2,13 +2,15 @@
 #define _SCANGEN_
 
 #include "lib.hpp"
+#include "lr0_generator.hpp"
 
-void generate_scanner(vector<string> regexes, vector<string> executions, string preexecution, string postexecution) {
+void generate_scanner(vector<string> regexes, vector<string> executions, string preexecution, string postexecution, map<LR0Symbol, Action> ACTION[], map<LR0Symbol, int> GOTO[], pair<LR0Symbol, int> magnitudes[], int nStates, int nProds, vector<LR0Symbol> terminals, vector<LR0Symbol> nonterminals) {
     ofstream MyFile("scanner.cpp");
 // start header
     string header = 
 "#include \"libraries/lib.hpp\"\n\
 #include \"libraries/lex_analyzer.hpp\"\n\
+#include \"libraries/lr0_generator.hpp\"\n\
 int main(int argc, char *argv[]) {\
     if (argc <= 1) {\
         cout << \"Por favor ingrese el archivo a leer\" << endl;\
@@ -53,6 +55,28 @@ MyFile <<
 "    curr_char = next_char + 1;\
 }";
     MyFile << postexecution << endl;
+    MyFile << "map<LR0Symbol, int> GOTO[" << nStates << "];" << endl;
+    MyFile << "map<LR0Symbol, Action> ACTION[" << nStates << "];" << endl;
+    for (int i = 0; i < nStates; i++) {
+        for (LR0Symbol terminal: terminals) {
+            MyFile << "ACTION[" << i << "][LR0Symbol(Terminal,\"" << terminal.name << "\")] = Action((ActionType)" << ACTION[i][terminal].actionType << ',' << ACTION[i][terminal].to << ");" << endl;
+        }
+        MyFile << "ACTION[" << i << "][LR0Symbol(Accepting,\"$\")] = Action((ActionType)" << ACTION[i][LR0Symbol(Accepting, "$")].actionType << ',' << ACTION[i][LR0Symbol(Accepting, "$")].to << ");" << endl;
+        for (LR0Symbol nonterminal: nonterminals) {
+            MyFile << "GOTO[" << i << "][LR0Symbol(Nonterminal,\"" << nonterminal.name << "\")] = " << GOTO[i][nonterminal] << ';' << endl;
+        }
+    }
+    MyFile << "pair<LR0Symbol, int> magnitudes[" << nProds << "];" << endl;
+    for (int i = 0; i < nProds; i++) {
+        MyFile << "magnitudes[" << i << "] = {LR0Symbol(Nonterminal, \"" << magnitudes[i].first.name << "\")," << magnitudes[i].second << "};" << endl;
+    }
+    
+    MyFile << "bool result = simulateTable(ACTION, GOTO, tokens, magnitudes);\
+    if (result) {\
+        cout << \"SI\" << endl;\
+    } else {\
+        cout << \"NO\" << endl;\
+    }" << endl;
     MyFile << "return 0;" << endl;
     MyFile << "}" << endl;
     MyFile.close();
